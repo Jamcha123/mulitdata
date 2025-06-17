@@ -1,0 +1,10 @@
+@import "tailwindcss";
+
+@layer components{
+    .fields{
+        @apply relative w-[20%] h-[100%] max-h-[80vh] m-0 p-[0] bg-gray-400 flex flex-col align-middle justify-center text-center
+    }
+    .datatext{
+        @apply text-2xl text-black
+    }
+}
