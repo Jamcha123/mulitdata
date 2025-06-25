@@ -1,7 +1,8 @@
 import { initializeApp } from 'firebase/app'
 import { initializeAppCheck, ReCaptchaEnterpriseProvider } from 'firebase/app-check'
-import { getAuth, onAuthStateChanged, signInAnonymously } from 'firebase/auth'
+import { getAuth, onAuthStateChanged, signInAnonymously, linkWithPopup } from 'firebase/auth'
 import { getFirestore } from 'firebase/firestore'
+
 
 const config =  {
     apiKey: "",
@@ -25,7 +26,11 @@ auth.useDeviceLanguage()
 
 const db = getFirestore(app)
 
-signInAnonymously(auth)
+onAuthStateChanged(auth, (user) => {
+    if(user == null){
+        signInAnonymously(auth)
+    }
+})
 onAuthStateChanged(auth, (user) => {
     if(user == null){
         console.log("user, not found")

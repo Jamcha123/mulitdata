@@ -2,64 +2,196 @@ import * as functions from 'firebase-functions'
 import admin from 'firebase-admin'
 import { randomBytes } from 'crypto'
 import fs from 'fs'
+import dotenv from 'dotenv'
+import Stripe from 'stripe'
+
+dotenv.config()
+const stripe = new Stripe(process.env.STRIPE)
 
 admin.initializeApp({
     credential: admin.credential.cert(JSON.parse(fs.readFileSync("key.json", "utf-8")))
 })
 
-export const refreshkey = functions.https.onRequest({cors: true}, async (req, res) => {
-    const {user} = req.query
+export const checkout1 = functions.https.onRequest({cors: true}, async (req, res) => {
+    const {amount, user} = req.query
+    const now = Date.now()
+
+    const session = await stripe.checkout.sessions.create({
+        line_items: [{
+            price: "price_1RdWeQBJFXFW6fU33NuwVI5k", 
+            quantity: amount
+        }], 
+        automatic_tax: {enabled: true}, 
+        currency: "usd",
+        mode: "payment", 
+        success_url: "https://addusage-43jzz2k43q-uc.a.run.app?items=" + amount.toString() + "&user=" + user.toString(),
+        cancel_url: "https://multidata-9cbd0.web.app"
+    })
+    res.redirect(301, session.url)
+})
+export const addusage = functions.https.onRequest({cors: true}, async (req, res) => {
+    const {items, user} = req.query;
     const id = (await admin.auth().getUser(user)).toJSON()
 
-    const key = randomBytes(16).toString("hex")
-    admin.firestore().doc("auth/" + id["uid"]).set({key})
+    let data = Number.parseFloat((await admin.firestore().doc("usage/" + id["uid"]).get()).get("limit")) + Number.parseFloat(items)
 
-    res.status(200).send(key)
+    await admin.firestore().doc("usage/" + id["uid"]).set({limit: data}) 
+
+    res.redirect(301, "https://multidata-9cbd0.web.app")
+    return res.end()
+})
+export const listbases1 = functions.https.onRequest({cors: true}, async (req, res) => {
+    const {user} = req.query
+    const id = (await admin.auth().getUser(user)).toJSON()
+    const names = (await admin.firestore().doc("database/" + id["uid"]).get()).data()
+    const access = (await admin.firestore().doc("access/" +  id["uid"]).get()).data()
+
+    const arr1 = names["1"]
+    const arr2 = access["1"]
+
+    const target1 = []
+    const target2 = []
+    for(let i = 0; i != arr1.length; i++){
+        target1.push(arr2[i][arr1[i]])
+        target2.push(arr1[i])
+    }
+    res.status(200).json({"names": target2, "access": target1})
     return res.end()
 })
 
 export const createdata = functions.https.onRequest({cors: true}, async (req, res) => {
-    const {access, user, name, text} = req.query
+    const {name, text, user} = req.query
     const id = (await admin.auth().getUser(user)).toJSON()
-    
-    const data = admin.firestore().doc("auth/" + user)
-    if((await data.get()).get("key") == null && (await data.get()).get("key") == undefined){
-        const key = randomBytes(16).toString("hex")
-        admin.firestore().doc("auth/" + id["uid"]).set() 
-    }
+    const key = randomBytes(16).toString("hex")
 
-    const getKey = (await admin.firestore().doc("auth/" + id["uid"]).get()).get("key")
-    if(access == getKey){
-        admin.firestore().doc("" + access.toString() + "/" + name.toString()).set({text: [text]})
+    const dataname = (await admin.firestore().doc("database/" + id["uid"]).get()).get("1")
+    if(dataname != undefined || dataname != null){
+        dataname.push(name)
 
-        res.status(200).send("database called " + name + " created")
-        return res.end()
+        const obj1 = {}
+        obj1["1"] = dataname
+
+        admin.firestore().doc("database/" + id["uid"]).set(obj1)
     }else{
-
-        res.status(200).send(access + ", access token is wrong")
-        return res.end()
+        const obj1 = {}
+        obj1["1"] = [name]
+        admin.firestore().doc("database/" + id["uid"]).set(obj1)
     }
+
+    const target = (await admin.firestore().doc("access/" + id["uid"]).get()).get("1")
+    if(target != null || target != undefined){
+        const arr = {}
+        arr[name.toString()] = key
+
+        target.push(arr)
+
+        const obj2 = {}
+        obj2["1"] = target
+
+        admin.firestore().doc("access/" + id["uid"]).set(obj2)
+    }else{
+        const arr = {}
+        arr[name.toString()] = key
+
+        const obj2 = {}
+        obj2["1"] = [arr]
+        admin.firestore().doc("access/" + id["uid"]).set(obj2)
+    }
+    
+    const obj3 = {}
+    obj3["1"] = [text]
+    admin.firestore().doc("" + name + "/" + key).set(obj3)
+
+    const data = await admin.firestore().doc("" + name + "/"+ key)
+    res.status(200).send("database created")
+    return res.end()
 })
 
 export const adddata = functions.https.onRequest({cors: true}, async (req, res) => {
-    const {access, name, text} = req.query
-    
-    const db = admin.firestore().doc("" + access.toString() + "/" + name.toString())
-    
-    const targets = (await db.get()).data()
-    targets["text"].push(text)
+    const {access, name, text, user} = req.query
+    const id = (await admin.auth().getUser(user)).toJSON()
 
-    await db.update({text: targets["text"]})
-    res.status(200).send(targets)
+    const usage = await (await admin.firestore().doc("usage/" + id["uid"]).get()).get("limit")
+    if(Number.parseFloat(usage) <= 0){
+        return res.status(400).send(usage + " is 0 or less than 0")
+    }
+    const data = await (await admin.firestore().doc("database/" + id["uid"]).get()).get("1")
+    const items1 = new Promise((resolve) => {
+        data.forEach((e) => {
+            if(e == name){
+                resolve(e)
+            }
+        })
+        resolve(name + ", not found")
+    })
+    if(name + ", not found" == await items1){
+        return res.status(400).send(name + ", not found")
+    }
+    const tokens = await (await admin.firestore().doc("access/" + id["uid"]).get()).get("1")
+    const items2 = new Promise((resolve) => {
+        tokens.forEach(async (e) => {
+            if(e[name.toString()] == access){
+                resolve(e[name.toString()])
+            }
+        })
+        resolve(access + ", not found")
+    })
+    if(access + ", not found" == await items2){
+        return res.status(400).send(access + ", not found")
+    }
+    const dbref = await (await admin.firestore().doc("" + await items1 + "/" + await items2).get()).get("1")
+    dbref.push(text)
+
+    const obj4 = {}
+    obj4["1"] = dbref
+
+    await admin.firestore().doc("" + await items1 + "/" + await items2).set(obj4)
+
+    const target = Number.parseFloat(usage-0.02)
+    await admin.firestore().doc("usage/" + id["uid"]).set({limit: target})
+
+    res.status(200).send(dbref)
     return res.end()
 })
 
 export const readdata = functions.https.onRequest({cors: true}, async (req, res) => {
-    const {access, name} = req.query;
+    const {access, user, name} = req.query;
 
-    const db = await admin.firestore().doc("" + access + "/" + name)
-    const target = (await db.get()).data()
+    const id = (await admin.auth().getUser(user)).toJSON()
 
-    res.status(200).json(target)
+
+    const usage = await (await admin.firestore().doc("usage/" + id["uid"]).get()).get("limit")
+    if(Number.parseFloat(usage) <= 0){
+        return res.status(400).send(usage + " is 0 or less than 0")
+    }
+
+    const dataname = (await admin.firestore().doc("database/" + id["uid"]).get()).get("1")
+
+    const item1 = new Promise((resolve) => {
+        dataname.forEach((e) => {
+            if(e == name){
+                resolve(e)
+            }
+        })
+        resolve(name + ", not found")
+    })
+    if(await item1 == name + ", not found"){
+        return res.status(400).send(name + ", not found")
+    }
+    const tokens = (await admin.firestore().doc("access/" + id["uid"]).get()).get("1")
+    const item2 = new Promise((resolve) => {
+        tokens.forEach(async (e) => {
+            if(e[name.toString()] == access){
+                resolve(e[name.toString()])
+            }
+        })
+        resolve(e[name.toString()] + ", not found")
+    })
+
+    const target = Number.parseFloat(usage-0.02)
+    await admin.firestore().doc("usage/" + id["uid"]).set({limit: target})
+
+    const data = (await admin.firestore().doc("" + name.toString() + "/" + await item2).get()).data()
+    res.status(200).send(data)
     return res.end()
 })

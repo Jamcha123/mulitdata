@@ -1,10 +1,36 @@
+@import url('https://fonts.googleapis.com/css2?family=Average+Sans&family=Noto+Sans:ital,wght@0,100..900;1,100..900&family=Nunito+Sans:ital,opsz,wght@0,6..12,200..1000;1,6..12,200..1000&family=Raleway:ital,wght@0,100..900;1,100..900&family=Roboto+Condensed:ital,wght@0,100..900;1,100..900&family=Schibsted+Grotesk:ital,wght@0,400..900;1,400..900&display=swap');
 @import "tailwindcss";
 
 @layer components{
-    .fields{
-        @apply relative w-[20%] h-[100%] max-h-[80vh] m-0 p-[0] bg-gray-400 flex flex-col align-middle justify-center text-center
+    .items{
+        @apply relative w-[100%] h-[5em] m-0 p-[0] bg-gray-600
+        flex flex-row align-middle justify-center text-center top-[0%]
+        duration-300 transition-all hover:bg-gray-200 text-white hover:text-black
     }
-    .datatext{
-        @apply text-2xl text-black
+    .items1{
+        @apply relative w-[100%] h-[40em] m-auto p-[0] flex flex-col align-middle justify-center text-center bg-transparent
+
     }
+    .items-inner{
+        @apply relative w-[75%] h-[35%] m-auto p-[0] bg-gray-500 flex flex-row align-middle justify-center rounded-md
+    }
+    .databases{
+        @apply relative w-[75%] h-[2em] m-auto p-[0] bg-gray-700
+        flex flex-row align-middle justify-evenly text-center cursor-pointer
+    }
+    .listText{
+        @apply text-xl text-white
+    }
+}
+h1, input, p{
+    font-family: "Raleway", sans-serif;
+    font-optical-sizing: auto;
+    font-weight: 200;
+    font-style: normal;
+  
+}
+li, button{
+    font-family: "Noto Sans", sans-serif;
+    font-optical-sizing: auto;
+    font-weight: 200;
 }
