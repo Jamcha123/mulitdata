@@ -273,6 +273,11 @@ export default function App(){
         addlink.innerText = "add data to " + tables.value + " link"
         row2.appendChild(addlink)
 
+        const texting = document.createElement("h1")
+        texting.classList.add("texts")
+        texting.innerText = "you can change the text query in the link"
+        row2.appendChild(texting)
+
         element.appendChild(row2)
 
         const row3 = document.createElement("div")

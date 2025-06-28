@@ -25,10 +25,10 @@
     .content{
         @apply h-[70%] flex-col justify-evenly
     }
-    .name, .access, .uid{
+    .name, .access, .uid, .texts{
         @apply text-3xl text-white
     }
-    .access, .uid, .adding, .reading{
+    .access, .uid, .adding, .reading, .texts{
         @apply text-xl
     }
     .adding, .reading{
