@@ -6,7 +6,7 @@ import dotenv from 'dotenv'
 import Stripe from 'stripe'
 
 dotenv.config()
-const stripe = new Stripe(process.env.STRIPE)
+const stripe = new Stripe(process.env.STRIPE_LIVE)
 
 admin.initializeApp({
     credential: admin.credential.cert(JSON.parse(fs.readFileSync("key.json", "utf-8")))
@@ -18,7 +18,7 @@ export const checkout1 = functions.https.onRequest({cors: true}, async (req, res
 
     const session = await stripe.checkout.sessions.create({
         line_items: [{
-            price: "price_1RdWeQBJFXFW6fU33NuwVI5k", 
+            price: "price_1ReIAZBJFXFW6fU32gEMY7BC", 
             quantity: amount
         }], 
         automatic_tax: {enabled: true}, 
@@ -150,7 +150,7 @@ export const adddata = functions.https.onRequest({cors: true}, async (req, res) 
     const target = Number.parseFloat(usage-0.02)
     await admin.firestore().doc("usage/" + id["uid"]).set({limit: target})
 
-    res.status(200).send(dbref)
+    res.status(200).json((await admin.firestore().doc("" + await items1 + "/" + await items2).get()).data())
     return res.end()
 })
 
@@ -187,6 +187,10 @@ export const readdata = functions.https.onRequest({cors: true}, async (req, res)
         })
         resolve(e[name.toString()] + ", not found")
     })
+    if(await item2 == access + ", not found"){
+        res.status(400).send(access + ", not found")
+        return res.end()
+    }
 
     const target = Number.parseFloat(usage-0.02)
     await admin.firestore().doc("usage/" + id["uid"]).set({limit: target})

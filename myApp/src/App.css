@@ -15,11 +15,35 @@
         @apply relative w-[75%] h-[35%] m-auto p-[0] bg-gray-500 flex flex-row align-middle justify-center rounded-md
     }
     .databases{
-        @apply relative w-[75%] h-[2em] m-auto p-[0] bg-gray-700
-        flex flex-row align-middle justify-evenly text-center cursor-pointer
+        @apply relative w-[100%] h-[100%] m-auto p-[0] bg-transparent
+        hidden flex-col align-middle justify-center text-center text-black text-2xl
     }
-    .listText{
-        @apply text-xl text-white
+    .title, .content, .footer{
+        @apply relative w-[100%] h-[15%] m-auto p-[0] bg-transparent
+        flex flex-row align-middle text-center justify-center
+    }
+    .content{
+        @apply h-[70%] flex-col justify-evenly
+    }
+    .name, .access, .uid{
+        @apply text-3xl text-white
+    }
+    .access, .uid, .adding, .reading{
+        @apply text-xl
+    }
+    .adding, .reading{
+        @apply text-violet-500 underline underline-offset-2
+    }
+    #deletion{
+        @apply relative w-[15em] h-[2em] m-auto p-[0] bg-transparent
+        text-2xl text-red-400 underline underline-offset-2 cursor-pointer
+        hover:scale-[0.9] active:scale-[1.1] duration-100 transition-all
+    }
+    .showing{
+        @apply flex
+    }
+    .hiding{
+        @apply hidden
     }
 }
 h1, input, p{
@@ -29,7 +53,7 @@ h1, input, p{
     font-style: normal;
   
 }
-li, button{
+li, button, select, option{
     font-family: "Noto Sans", sans-serif;
     font-optical-sizing: auto;
     font-weight: 200;
